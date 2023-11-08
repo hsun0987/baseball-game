@@ -49,6 +49,7 @@ class ClientThread extends Thread {
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
             this.setDaemon(true); // 데몬 스레드로 설정
+            run();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -88,12 +89,24 @@ class ClientThread extends Thread {
                 out.close();
                 //  oos.close();
 
-                GameServer.clients.remove(clientSocket);
+                removeClient(this);
             }
         }catch (IOException e){
             e.printStackTrace();
         }
     }
+
+    // 클라이언트가 퇴장한 경우 클라이언트를 리스트에서 제거
+    public static void removeClient(ClientThread client) {
+        GameServer.clients.remove(client);
+    }
+
+    // 클라이언트에게 메시지를 전송하는 메서드
+    public void sendMessage(String message) throws IOException {
+        out.write(message + "\n");
+        out.flush();
+    }
+
 }
 
 

@@ -65,7 +65,7 @@ public class GameClient {
     class SendThread extends Thread {
         private Socket socket = null;
         private String name;
-        public SendThread(Socket socket, String name) throws IOException { //생성자
+        public SendThread(Socket socket, String name) throws IOException {
             this.socket = socket;
             this.name = name;
         }
