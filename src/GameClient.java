@@ -1,56 +1,45 @@
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Scanner;
 
-import static java.lang.System.in;
-
 public class GameClient {
     static DataOutputStream dos = null;
     static DataInputStream dis = null;
-
-    private BufferedReader in = null;
-    private BufferedWriter out = null;
-    private String name;
-    private Socket socket = null;
-
-    public GameClient(){
-        try {
-            socket = new Socket("localhost", 50001); // 누구한테 연결할거야??? -> 서버정보가 필요
-            System.out.println("연결됨 ... 포트번호 : " + socket.getLocalPort());
-            out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())); //서버와 스트림 연결
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream())); //서버와 스트림 연결
-
-            connectServer(socket);
-
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-    }
     public static void main(String[] args) {
-       GameClient client = new GameClient();
-    }
+        Socket socket = new Socket();
 
-    private void connectServer(Socket socket) throws IOException{
+        Scanner sc = new Scanner(System.in);
         try {
+
+            socket.connect(new InetSocketAddress("localhost", 50001));
+            System.out.println("연결됨 ... 포트번호 : " + socket.getLocalPort());
+            dos = new DataOutputStream(socket.getOutputStream());
+            dis = new DataInputStream(socket.getInputStream());
+
             System.out.print("사용자 아이디를 만들어주세요 : ");
-            name = in.readLine();
+            dos.writeUTF(sc.nextLine());
 
-            Thread sendThread = new SendThread(socket, name);
-
-            sendThread.setDaemon(true);
-            sendThread.start();
+            new Thread(() -> {
+                try {
+                    while (true) {
+                        String message = dis.readUTF();
+                        System.out.println(message);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }).start();
 
             while (true) {
-                String inputMsg = in.readLine();
-                if (inputMsg == null) {
-                    break;
-                }
-                System.out.println("From: " + inputMsg);
+                // System.out.print(">>");
+                dos.writeUTF(sc.nextLine());
+                dos.flush();
             }
 
         } catch (IOException e) {
-            System.out.println("[서버와 접속 끊김]");
             throw new RuntimeException(e);
         } finally {
             try {
@@ -59,15 +48,6 @@ public class GameClient {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }
-        //System.out.println("[서버와 연결 종료]");
-    }
-    class SendThread extends Thread {
-        private Socket socket = null;
-        private String name;
-        public SendThread(Socket socket, String name) throws IOException {
-            this.socket = socket;
-            this.name = name;
         }
     }
 }
